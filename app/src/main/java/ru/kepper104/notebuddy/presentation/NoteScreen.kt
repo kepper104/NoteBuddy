@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -37,50 +40,28 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.Observer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.kepper104.notebuddy.domain.model.Note
+import ru.kepper104.notebuddy.formatDate
+import java.util.Calendar
 
 @Composable
 fun NoteScreen(
     noteViewModel: NoteViewModel = viewModel()
 ) {
-    if (!noteViewModel.mainState.isEditing){
-        MainView()
-    } else {
-        EditView()
-    }
-}
-
-@Composable
-fun NoteComposable(note: Note) {
-    Column{
-        Divider()
-        Text(
-            text = note.title,
-            fontSize = 40.sp
-        )
-        Text(
-            text = note.text,
-            fontSize = 30.sp
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainView(
-    noteViewModel: NoteViewModel = viewModel()
-){
 
     val composeContext = LocalContext.current
 
@@ -90,6 +71,59 @@ fun MainView(
         makeToast(messageState?.peekContent()!!, composeContext)
     }
 
+    if (!noteViewModel.mainState.isEditing){
+        MainView()
+    } else {
+        EditView()
+    }
+}
+
+@Preview
+@Composable
+fun NoteComposable(note: Note = Note(null, "Just a preview", "Hello world!", Color.Green), viewModel: NoteViewModel? = null) {
+    Column{
+        Divider()
+        Text(
+            text = formatDate(note.last_modified, "dd.MM.yyyy HH:mm"),
+            fontSize = 20.sp,
+            modifier = Modifier.align(Alignment.End)
+        )
+        Text(
+            text = note.title,
+            fontSize = 40.sp
+        )
+        Text(
+            text = note.text,
+            fontSize = 30.sp
+        )
+        Row(
+            modifier = Modifier.align(Alignment.End)
+        ){
+            Button(
+                onClick = { viewModel!!.enableEditing(note) }) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit a note")
+            }
+            Spacer(
+                modifier = Modifier.width(10.dp)
+            )
+            Button(
+                onClick = { /*TODO*/ }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete a note")
+            }
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainView(
+    noteViewModel: NoteViewModel = viewModel()
+){
 
     Scaffold(
         floatingActionButton = {
@@ -108,7 +142,7 @@ fun MainView(
             ){
                 for (note in noteViewModel.mainState.notes){
                     item {
-                        NoteComposable(note = note)
+                        NoteComposable(note = note, viewModel = noteViewModel)
                     }
                 }
             }
@@ -188,8 +222,9 @@ fun EditView(
     }
 }
 
+@Preview
 @Composable
-fun DropdownMenuItemContent(color: Color) {
+fun DropdownMenuItemContent(color: Color = Color.Green) {
     Row {
         val imageVector = Icons.Filled.Circle
 

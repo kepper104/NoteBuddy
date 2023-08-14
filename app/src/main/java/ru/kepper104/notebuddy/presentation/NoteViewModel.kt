@@ -67,6 +67,9 @@ private val repository: NoteRepository
         }
 
     }
+    fun deleteNote(note: Note){
+        
+    }
     fun callToast(message: String){
         statusMessage.value = Event(message)
     }

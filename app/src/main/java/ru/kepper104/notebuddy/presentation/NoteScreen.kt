@@ -233,7 +233,9 @@ fun EditView(
                     .background(colorGray.c())
                     .fillMaxSize()
             ) {
-
+                // TODO Just work on edit screen, make title edit just a line,
+                //  remove everything but placeholder text from body,
+                //  maybe make color selection bit cooler
                 Text(
                     text = "Edit a Note",
                     fontSize = 40.sp,
@@ -247,6 +249,7 @@ fun EditView(
                     value = noteViewModel.editState.titleText,
                     onValueChange ={ newTitle ->
 //                        if (noteViewModel.editState.titleText.length <= )
+//                        TODO Add character limit to title edit
                         noteViewModel.editState = noteViewModel.editState.copy(titleText = newTitle)},
                     singleLine = true,
                     modifier = Modifier.background(colorGray.c())
@@ -327,6 +330,7 @@ fun NoteComposable(note: Note = Note(null, "Just a preview", "Hello world!", col
                 text = note.text,
                 fontSize = 20.sp,
                 maxLines = 7
+                // TODO figure out text cutoff (cutoffText(note.text, 250)), mb smth with maxLines
             )
             Row(
                 modifier = Modifier.align(Alignment.End)

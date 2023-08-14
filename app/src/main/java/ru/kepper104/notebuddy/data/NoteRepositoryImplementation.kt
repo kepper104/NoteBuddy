@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.map
 import ru.kepper104.notebuddy.domain.model.Note
 import ru.kepper104.notebuddy.domain.repository.NoteRepository
 
-class NoteRepositoryImpl(
+class NoteRepositoryImplementation(
     private val dao: NoteDatabaseDao
 ) : NoteRepository {
     override suspend fun insertNote(note: Note) {

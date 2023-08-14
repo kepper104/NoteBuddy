@@ -1,15 +1,14 @@
 package ru.kepper104.notebuddy.presentation
 
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.kepper104.notebuddy.domain.model.Note
@@ -23,17 +22,21 @@ import javax.inject.Inject
 class NoteViewModel @Inject constructor(
 private val repository: NoteRepository
 ): ViewModel() {
+    private val loggerTag = "LoggerViewModel"
 
     var mainState by mutableStateOf(NoteState())
     var editState by mutableStateOf(EditState())
 
-    private val statusMessage = MutableLiveData<Event<String>>()
+    private val _sharedFlow = MutableSharedFlow<ScreenEvent>()
+    val sharedFlow = _sharedFlow.asSharedFlow()
 
-    val message : LiveData<Event<String>>
-        get() = statusMessage
-
+    sealed class ScreenEvent{
+        object NoteSavedToast: ScreenEvent()
+        object NoteDeletedSnackBar: ScreenEvent()
+    }
 
     init {
+        Log.d(loggerTag, "Initializing ViewModel")
         viewModelScope.launch {
             repository.getAllNotes().collectLatest { notes ->
                 mainState = mainState.copy(
@@ -44,59 +47,72 @@ private val repository: NoteRepository
     }
 
     fun enableEditing(note: Note){
+        Log.d(loggerTag, "Enabling editing of note ${note.id}")
+
         mainState = mainState.copy(
-            isEditing = true,
-            editedNote = note
+            isEditing = true
+        )
+        editState = editState.copy(
+            id = note.id,
+            titleText = note.title,
+            bodyText = note.text,
+            color = note.color,
+            colorText =  note.color.name()
         )
     }
+
     fun disableEditing(){
+        Log.d(loggerTag, "Disabling editing")
+
         mainState = mainState.copy(
             isEditing = false
         )
     }
+
     fun createNote(){
+        Log.d(loggerTag, "Creating new Note")
+
         enableEditing(Note())
     }
+
     fun saveNote(){
+        Log.d(loggerTag, "Saving Note ${editState.id}")
+
         disableEditing()
-        statusMessage.value = Event("Note Saved!")
+
         viewModelScope.launch {
+            _sharedFlow.emit(ScreenEvent.NoteSavedToast)
             repository.insertNote(
-                Note(null, editState.titleText, editState.bodyText, editState.color, Date())
+                Note(editState.id, editState.titleText, editState.bodyText, editState.color, Date())
             )
         }
 
     }
+
     fun deleteNote(note: Note){
-        
-    }
-    fun callToast(message: String){
-        statusMessage.value = Event(message)
-    }
+        Log.d(loggerTag, "Deleting Note ${note.id}")
 
-}
+        mainState = mainState.copy(
+            lastDeletedNote = note
+        )
+        viewModelScope.launch {
+            repository.deleteNote(note)
+            _sharedFlow.emit(ScreenEvent.NoteDeletedSnackBar)
 
-
-// Thanks to stackoverflow
-open class Event<out T>(private val content: T) {
-
-    var hasBeenHandled = false
-        private set // Allow external read but not write
-
-    /**
-     * Returns the content and prevents its use again.
-     */
-    fun getContentIfNotHandled(): T? {
-        return if (hasBeenHandled) {
-            null
-        } else {
-            hasBeenHandled = true
-            content
         }
     }
 
-    /**
-     * Returns the content, even if it's already been handled.
-     */
-    fun peekContent(): T = content
+    fun restoreLastDeletedNote(){
+        Log.d(loggerTag, "Restoring last Note")
+        if (mainState.lastDeletedNote == null) return
+        viewModelScope.launch{
+            repository.insertNote(mainState.lastDeletedNote!!)
+            mainState = mainState.copy(
+                lastDeletedNote = null
+            )
+        }
+    }
+
 }
+
+

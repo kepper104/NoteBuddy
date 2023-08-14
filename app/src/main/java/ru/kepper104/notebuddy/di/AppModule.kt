@@ -7,7 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ru.kepper104.notebuddy.data.NoteDatabase
-import ru.kepper104.notebuddy.data.NoteRepositoryImpl
+import ru.kepper104.notebuddy.data.NoteRepositoryImplementation
 import ru.kepper104.notebuddy.domain.repository.NoteRepository
 import javax.inject.Singleton
 
@@ -21,13 +21,13 @@ object AppModule {
         return Room.databaseBuilder(
             app,
             NoteDatabase::class.java,
-            "note_buddy.db"
+            "note_buddy_new.db"
         ).build()
     }
 
     @Singleton
     @Provides
     fun provideNoteRepository(db: NoteDatabase): NoteRepository {
-        return NoteRepositoryImpl(db.dao)
+        return NoteRepositoryImplementation(db.dao)
     }
 }

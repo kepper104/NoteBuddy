@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,6 +38,7 @@ private val repository: NoteRepository
 
     init {
         Log.d(loggerTag, "Initializing ViewModel")
+
         viewModelScope.launch {
             repository.getAllNotes().collectLatest { notes ->
                 mainState = mainState.copy(
@@ -44,6 +46,7 @@ private val repository: NoteRepository
                 )
             }
         }
+
     }
 
     fun enableEditing(note: Note){
@@ -56,9 +59,9 @@ private val repository: NoteRepository
             id = note.id,
             titleText = note.title,
             bodyText = note.text,
-            color = note.color,
-            colorText =  note.color.name()
+
         )
+        setSelectedColor(note.color)
     }
 
     fun disableEditing(){
@@ -83,7 +86,7 @@ private val repository: NoteRepository
         viewModelScope.launch {
             _sharedFlow.emit(ScreenEvent.NoteSavedToast)
             repository.insertNote(
-                Note(editState.id, editState.titleText, editState.bodyText, editState.color, Date())
+                Note(editState.id, editState.titleText, editState.bodyText, getSelectedColor(), Date())
             )
         }
 
@@ -110,6 +113,33 @@ private val repository: NoteRepository
             mainState = mainState.copy(
                 lastDeletedNote = null
             )
+        }
+    }
+
+     fun getSelectedColor(): CustomColor {
+        for(button in editState.colorsRadioButtonsList){
+            if (button.isSelected.value){
+                println("Getting selected color: ${button.color.c()}")
+                return button.color
+            }
+        }
+        return CustomColor("Null", Color(0, 0, 0))
+    }
+
+     fun setSelectedColor(color: CustomColor){
+         editState.colorsRadioButtonsList.forEachIndexed{index, info ->
+             editState.colorsRadioButtonsList[index].isSelected.value = info.color == color
+
+
+         }
+//        for (button in editState.colorsRadioButtonsList){
+//            button.isSelected = button.color == color
+//        }
+    }
+    fun printAllColorsState(){
+        editState.colorsRadioButtonsList.forEachIndexed{index, info ->
+            println("Colors: $index: (${info.color}, ${info.initiallySelected})")
+
         }
     }
 

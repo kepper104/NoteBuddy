@@ -5,6 +5,7 @@ data class EditState(
     var titleText: String = "",
     var bodyText: String = "",
     var color: CustomColor = colorGreen,
-    var colorText: String = "Gray"
+    var colorsRadioButtonsList: MutableList<ToggleableInfo> = NoteColors.colors.map { c -> ToggleableInfo(color = c) }
+        .toMutableList()
 
 )
